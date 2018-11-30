@@ -114,7 +114,11 @@ def volunteer_get(volunteer_id):
     if volunteer_id.startswith('vk:'):
         vk_id = int (volunteer_id[3:])
         api_url = "https://api.vk.com/method/users.get?" + \
-            urllib.parse.urlencode({'user_ids': vk_id})
+            urllib.parse.urlencode({
+            'user_ids': vk_id,
+            'access_token': config.vk_access_token,
+            'v': 5.92,
+            })
         try:
             res = json.loads(urllib.request.urlopen(api_url).read().decode())
         except urllib.error.HTTPError:
@@ -124,7 +128,7 @@ def volunteer_get(volunteer_id):
         res = res['response'][0]
         volunteer_cache[volunteer_id] = (
             "%s %s" % (res['first_name'], res['last_name']),
-            "https://vk.com/id%s" % res['uid']
+            "https://vk.com/id%s" % res['id']
         )
         return volunteer_cache[volunteer_id]
     if volunteer_id.startswith('google:'):
