@@ -130,6 +130,12 @@ class DB:
     def balloons_old(self, event_id):
         return self.__balloons_filter(event_id, 'and state>=100')
 
+    def balloons_old_not_delivered(self, event_id):
+        return self.__balloons_filter(event_id, 'and state>=100 and state<200')
+
+    def balloons_old_delivered(self, event_id):
+        return self.__balloons_filter(event_id, 'and state>=200')
+
     def balloons_my(self, event_id, user_id):
         return self.__balloons_filter(event_id, 'and state>=100 and state<200 and volunteer_id=%s', [user_id])
 

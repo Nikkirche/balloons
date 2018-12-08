@@ -10,6 +10,7 @@ lang_ru = {
     'event_header_problems': 'Задачи',
     'event_header_queue': 'Очередь',
     'event_header_your_queue': 'Вы несете',
+    'event_header_delivered': 'Доставлено',
     'event_queue_done': 'Готово',
     'event_queue_drop': 'Отказаться',
     'event_queue_first_solved': '(FTS)',

@@ -438,10 +438,16 @@ def event(event, hall):
         lang.lang['event_header_offer'],
         get_state_str_queue, balloons
     )
-    balloons = db.balloons_old(event_id)
+    balloons = db.balloons_old_not_delivered(event_id)
     balloons = list (map (Balloon, balloons))
     content += get_balloons_html(
         lang.lang['event_header_queue'],
+        get_state_str_queue, balloons
+    )
+    balloons = db.balloons_old_delivered(event_id)
+    balloons = list (map (Balloon, balloons))
+    content += get_balloons_html(
+        lang.lang['event_header_delivered'],
         get_state_str_queue, balloons
     )
 
