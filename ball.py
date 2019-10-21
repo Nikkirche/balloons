@@ -64,13 +64,7 @@ def action_balloon_take(db, *, event, balloon, volunteer, hall):
         return abort(404)
     state = int (balloon[4])
     if state >= 100:
-        return page(
-            title=lang.lang['error'],
-            content=design.error(
-                message=lang.lang['error_ball_taken'],
-                back=url_for("event", event=event, hall=hall)
-            )
-        )
+        return redirect(url_for("event", event=event, hall=hall))
     db.balloon_take(balloon[0], volunteer)
     return redirect(url_for("event", event=event, hall=hall))
 
