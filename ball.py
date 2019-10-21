@@ -497,8 +497,7 @@ def event_standings(event):
     teams = []
     content = '<table>'
     for t in sorted(db.teams(event_id), key=lambda t: t['name']):
-        if not t['name'].startswith('S'):
-          # Hack for NEERC-2017: 'S' is for St. Petersburg
+        if config.hall_by_team_name(t['name']) is None:
           continue
         content += '<tr>'
         content += '<td style="font-size: large">%s</td><td>&nbsp;</td>' % t['name']
