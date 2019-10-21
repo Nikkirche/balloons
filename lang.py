@@ -17,6 +17,8 @@ lang_ru = {
     'event_queue_problem': 'Задача',
     'event_queue_team': 'Команда',
     'event_queue_take': 'Отнесу',
+    'event_halls_list_header': 'Холл',
+    'event_halls_list_all': 'Все',
 
     'index_add_event': 'Добавить соревнование',
     'index_log_in': 'Войти',

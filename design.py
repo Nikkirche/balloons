@@ -295,3 +295,21 @@ def volunteer_ext(*, name, url):
     url = escape(url)
     return ' (<a href="%s">%s</a>)' % (url, name)
 
+def halls_list(*, event_id, current_hall):
+    content = ('<table><tr class="balloons_row"><td>' +
+      lang.lang['event_halls_list_header'] +
+      ': </td>')
+    if current_hall != 0:
+      content += ('<td><a href="/event%d_0">' +
+        lang.lang['event_halls_list_all'] +
+        '</a></td>') % event_id
+    else:
+      content += '<td>' + lang.lang['event_halls_list_all'] + '</td>'
+    for hall in range(1, 10):
+      if current_hall == hall:
+        content += '<td>&nbsp;</td><td>%d</td>' % hall
+      else:
+        content += '<td>&nbsp;</td><td><a href="/event%d_%d">%d</a></td>' % (event_id, hall, hall)
+    content += '</tr></table>'
+    return content
+

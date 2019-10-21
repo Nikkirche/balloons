@@ -47,18 +47,18 @@ def action_color_set(db, *, problem, value):
     db.problem_color(problem, value)
     return redirect(url_for("problem", problem=problem))
 
-@arguments(None, event=int, balloon=int, volunteer=str)
-def action_balloon_done(db, *, event, balloon, volunteer):
+@arguments(None, event=int, balloon=int, volunteer=str, hall=int)
+def action_balloon_done(db, *, event, balloon, volunteer, hall):
     db.balloon_done(balloon, volunteer)
-    return redirect(url_for("event", event=event))
+    return redirect(url_for("event", event=event, hall=hall))
 
-@arguments(None, event=int, balloon=int)
-def action_balloon_drop(db, *, event, balloon):
+@arguments(None, event=int, balloon=int, hall=int)
+def action_balloon_drop(db, *, event, balloon, hall):
     db.balloon_drop(balloon)
-    return redirect(url_for("event", event=event))
+    return redirect(url_for("event", event=event, hall=hall))
 
-@arguments(None, event=int, balloon=int, volunteer=str)
-def action_balloon_take(db, *, event, balloon, volunteer):
+@arguments(None, event=int, balloon=int, volunteer=str, hall=int)
+def action_balloon_take(db, *, event, balloon, volunteer, hall):
     balloon = db.balloon(balloon, lock=True)
     if balloon is None:
         return abort(404)
@@ -68,11 +68,11 @@ def action_balloon_take(db, *, event, balloon, volunteer):
             title=lang.lang['error'],
             content=design.error(
                 message=lang.lang['error_ball_taken'],
-                back=url_for("event", event=event)
+                back=url_for("event", event=event, hall=hall)
             )
         )
     db.balloon_take(balloon[0], volunteer)
-    return redirect(url_for("event", event=event))
+    return redirect(url_for("event", event=event, hall=hall))
 
 
 @ball.route('/action_mk2', methods=['POST'])
@@ -136,7 +136,7 @@ def index():
         event_link = design.event_nolink
     for e in events:
         if e[1]:
-            content += event_link(url=url_for('event', event=e[0]), name=e[1])
+            content += event_link(url=url_for('event', event=e[0], hall=0), name=e[1])
         else:
             content += design.event_nolink(name=e[3])
     if user_ok:
@@ -267,27 +267,29 @@ def problem(problem):
     return response
 
 
-def get_state_str_current(event_id, b, *, user_id):
+def get_state_str_current(event_id, b, *, user_id, hall):
     state_str = design.action_link_mk2(
         arguments={
             'method': 'balloon_done',
             'event': event_id,
             'balloon': b.id,
-            'volunteer': user_id
+            'volunteer': user_id,
+            'hall': hall,
         },
         label=lang.lang['event_queue_done']
     ) + ' ' + design.action_link_mk2(
         arguments={
             'method': 'balloon_drop',
             'event': event_id,
-            'balloon': b.id
+            'balloon': b.id,
+            'hall': hall,
         },
         label=lang.lang['event_queue_drop']
     )
     return state_str
 
 
-def get_state_str_queue(event_id, b, *, user_id):
+def get_state_str_queue(event_id, b, *, user_id, hall=0):
     state_str = None
     if b.state >= 0 and b.state < 100:
         state_str = (
@@ -297,7 +299,8 @@ def get_state_str_queue(event_id, b, *, user_id):
                     'method': 'balloon_take',
                     'event': event_id,
                     'balloon': b.id,
-                    'volunteer': user_id
+                    'volunteer': user_id,
+                    'hall': hall,
                 },
                 label=lang.lang['event_queue_take']
             )
@@ -321,8 +324,12 @@ def get_state_str_queue(event_id, b, *, user_id):
     return state_str
 
 
-@ball.route('/event<int:event>')
-def event(event):
+@ball.route('/event<int:eventp>')
+def event_nohall(eventp):
+  return event(eventp, 0)
+
+@ball.route('/event<int:event>_<int:hall>')
+def event(event, hall):
     user_id, auth_html, user_ok = check_auth(request)
     if not user_ok:
         return redirect(url_for('index'))
@@ -342,6 +349,7 @@ def event(event):
     event_html = ''
     event_html += design.standings_link(url=url_for('event_standings', event=event_id))
     content += event_html
+    content += design.halls_list(event_id=event_id, current_hall=hall)
 
     problems = db.problems(event_id)
     problems_map = {p['id']: i for i, p in enumerate (problems)}
@@ -387,7 +395,7 @@ def event(event):
         for b in balloons:
             p = problems[problems_map[b.problem_id]]
             t = teams[teams_map[b.team_id]]
-            state_str = get_state_str(event_id, b, user_id=user_id)
+            state_str = get_state_str(event_id, b, user_id=user_id, hall=hall)
             balloons_text = '&nbsp;'
             if not p['color']:
                 balloons_text = '?'
@@ -424,6 +432,8 @@ def event(event):
     )
     balloons = db.balloons_new(event_id)
     balloons = list (map (Balloon, reversed (balloons)))
+    if (hall != 0):
+      balloons = [b for b in balloons if config.hall_by_team_name(teams[teams_map[b.team_id]]['name']) == hall]
     content += get_balloons_html(
         lang.lang['event_header_offer'],
         get_state_str_queue, balloons
