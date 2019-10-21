@@ -5,7 +5,7 @@ lang_ru = {
     'balloon_state_delivered': 'Доставлен',
     'balloon_state_wanted': 'Нужно отнести!',
 
-    'event_header_monitor_link': 'Монитор соревнования',
+    'event_header_monitor_link': 'Таблица шариков',
     'event_header_offer': 'Предлагаем отнести',
     'event_header_problems': 'Задачи',
     'event_header_queue': 'Очередь',
@@ -50,7 +50,6 @@ lang_ru = {
 
     'error': 'Ошибка',
     'error_ball_taken': 'Шарик уже зарезервирован',
-    'warning_no_penalty_attempts': 'Порядок команд может быть неверным потому что не учитываются штрафные попытки.',
 
     'back': 'Вернуться',
     'this_is_you': 'Это вы',

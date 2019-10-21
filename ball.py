@@ -501,56 +501,24 @@ def event_standings(event):
 
     standings_header = ''.join(problems_header)
     teams = []
-    for t in db.teams(event_id):
-        score = 0
-        penalty = 0
-        team_row = []
+    content = '<table>'
+    for t in sorted(db.teams(event_id), key=lambda t: t['name']):
+        if not t['name'].startswith('S'):
+          # Hack for NEERC-2017: 'S' is for St. Petersburg
+          continue
+        content += '<tr>'
+        content += '<td style="font-size: large">%s</td><td>&nbsp;</td>' % t['name']
         for p in problems:
             key = (t['id'], p['id'])
             if key in oks:
-                ok_id, time = oks[key]
-                team_row.append(design.standings_yes(
-                    time=int(time),
-                    fts=ok_id == p['fts']
-                ))
-                score += 1
-                penalty += int(time / 60) # TODO: incorrect: does not assume previous attempts
+                content += '<td class="balloons_balloon_color" style="background-color: %s">%s</td>' % (
+                    p['color'],p['letter'])
             else:
-                team_row.append(design.standings_nope())
-        teams.append ([t['long_name'], ''.join(team_row), score, penalty, True, False, 1])
+                content += '<td><strike>%s</strike></td>' % p['letter']
+        content += '<td>&nbsp;&nbsp;&nbsp;</td><td>%s</td>' % t['long_name']
+        content += '<tr>'
+    content += '</table>'
 
-    teams = list(sorted(teams, key=lambda t: (-t[2], t[3])))
-    for i in range(1, len(teams)):
-        teams[i][4] = not teams[i - 1][4]
-        if teams[i][2] == teams[i - 1][2] and teams[i][3] == teams[i - 1][3]:
-            teams[i][6] = teams[i - 1][6]
-        else:
-            teams[i][6] = i + 1
-    for i in range(len(teams) - 2, -1, -1):
-        if teams[i][2] == teams[i + 1][2]:
-            teams[i][5] = teams[i + 1][5]
-        else:
-            teams[i][5] = not teams[i + 1][5]
-
-    teams_list = []
-    for name, problems, score, penalty, even, block_even, rank in teams:
-        teams_list.append(design.standings_team(
-            row=even,
-            block=block_even,
-            name=name,
-            problems=problems,
-            rank=rank,
-            score=score,
-            penalty=penalty
-        ))
-        even = not even
-    standings_body = ''.join(teams_list)
-    content = design.warning(
-        message=lang.lang['warning_no_penalty_attempts']
-    ) + design.standings_table(
-        header=standings_header,
-        body=standings_body
-    )
     db.close()
     return page(
         title=event['name'],
