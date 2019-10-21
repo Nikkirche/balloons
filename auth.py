@@ -6,6 +6,7 @@ import time
 import urllib
 
 import config
+import jwt
 
 class AuthentificationError(Exception):
     pass
@@ -53,7 +54,7 @@ class google:
     url = 'https://accounts.google.com/o/oauth2/v2/auth?' + urllib.parse.urlencode({
         'client_id': config.google_client_id,
         'response_type': 'code',
-        'scope': 'https://www.googleapis.com/auth/plus.login',
+        'scope': 'openid profile',
         'redirect_uri': config.base_url_global + '/auth/google/done'
     })
 
@@ -73,13 +74,8 @@ class google:
         res = json.loads(response.read().decode())
         if 'error' in res:
             raise AuthentificationError(str(res['error_description']))
-        access_token = res['access_token']
-        google_login_base = 'https://www.googleapis.com/plus/v1/people/me'
-        google_login_data = \
-            urllib.parse.urlencode(
-                {'access_token': access_token}
-            )
-        res = json.loads(urllib.request.urlopen(google_login_base + '?' +
-                         google_login_data).read().decode())
-        return 'google:' + str(res['id'])
+        token = jwt.decode(res['id_token'], verify=False)
+        sub = token['sub']
+        name = token.get('name', sub)
+        return 'google:' + sub
 
