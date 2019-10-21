@@ -275,7 +275,7 @@ def get_state_str_current(event_id, b, *, user_id, hall):
             'hall': hall,
         },
         label=lang.lang['event_queue_done']
-    ) + ' ' + design.action_link_mk2(
+    ) + '</td><td>' + design.action_link_mk2(
         arguments={
             'method': 'balloon_drop',
             'event': event_id,
@@ -315,7 +315,7 @@ def get_state_str_queue(event_id, b, *, user_id, hall=0):
             state_str += ' ' + design.volunteer(id=str(b.volunteer_id))
         else:
             volunteer_name, volunteer_link = volunteer
-            state_str += ' ' + design.volunteer_ext(
+            state_str += '</td><td>' + design.volunteer_ext(
                 name=volunteer_name,
                 url=volunteer_link
             )

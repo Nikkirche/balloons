@@ -225,10 +225,11 @@ def balloon(*, color, color_token, problem_comment, letter, team_comment, team_s
         '<td class="balloons_balloon_color"' +
         ' style="background-color: %s">%s</td>' +
         '<td>%s <b>%s</b></td>' +
-        '<td>%s <b>%s</b>: <span style="color: gray;">%s</span></td>' +
+        '<td>%s <b>%s</b></td>'+
         '<td>%s</td>' +
+        '<td class="balloon_team" style="color: gray;">%s</td>' +
         '</tr>\n'
-    ) % (color, color_token, problem_comment, letter, team_comment, team_short, team, state)
+    ) % (color, color_token, problem_comment, letter, team_comment, team_short, state, team)
 
 def volunteer_access(*, name, change):
     return (

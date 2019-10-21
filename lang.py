@@ -3,7 +3,7 @@ lang_ru = {
 
     'balloon_state_carrying': 'Несут',
     'balloon_state_delivered': 'Доставлен',
-    'balloon_state_wanted': 'Нужно отнести!',
+    'balloon_state_wanted': '',
 
     'event_header_monitor_link': 'Таблица шариков',
     'event_header_offer': 'Предлагаем отнести',
@@ -15,8 +15,8 @@ lang_ru = {
     'event_queue_drop': 'Отказаться',
     'event_queue_first_solved': '(FTS)',
     'event_queue_first_to_solve': '(FTS)',
-    'event_queue_problem': 'Задача',
-    'event_queue_team': 'Команда',
+    'event_queue_problem': '',
+    'event_queue_team': '',
     'event_queue_take': 'Отнесу',
     'event_halls_list_header': 'Холл',
     'event_halls_list_all': 'Все',
