@@ -196,6 +196,10 @@ def volunteers():
             )
         if id == user_id:
             change = design.text(text=lang.lang['this_is_you'])
+        # Only volunteers listed in config file should give permissions.
+        # This is insecure solution, other volunteers still can use direct link.
+        elif user_id not in config.allowed_users:
+            change = ''
         elif access:
             change = design.action_link_mk2(
                 arguments={
