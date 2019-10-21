@@ -111,40 +111,14 @@ volunteer_cache = {}
 def volunteer_get(volunteer_id):
     if volunteer_id in volunteer_cache:
         return volunteer_cache[volunteer_id]
-    if volunteer_id.startswith('vk:'):
-        vk_id = int (volunteer_id[3:])
-        api_url = "https://api.vk.com/method/users.get?" + \
-            urllib.parse.urlencode({
-            'user_ids': vk_id,
-            'access_token': config.vk_access_token,
-            'v': 5.92,
-            })
-        try:
-            res = json.loads(urllib.request.urlopen(api_url).read().decode())
-        except urllib.error.HTTPError:
-            return None
-        if 'error' in res:
-            return None
-        res = res['response'][0]
-        volunteer_cache[volunteer_id] = (
-            "%s %s" % (res['first_name'], res['last_name']),
-            "https://vk.com/id%s" % res['id']
-        )
-        return volunteer_cache[volunteer_id]
-    if volunteer_id.startswith('google:'):
-        google_id = int (volunteer_id[7:])
-        api_url = "https://www.googleapis.com/plus/v1/people/%d?key=%s" % (
-            google_id, config.google_key
-        )
-        try:
-            res = json.loads(urllib.request.urlopen(api_url).read().decode())
-        except urllib.error.HTTPError:
-            return None
-        if 'error' in res:
-            return None
-        volunteer_cache[volunteer_id] = (res['displayName'], res['url'])
-        return volunteer_cache[volunteer_id]
-    return None
+    db = DB()
+    name, url = db.volunteer_get(volunteer_id)
+    db.close()
+    if name:
+      volunteer_cache[volunteer_id] = (name, url)
+    else:
+      volunteer_cache[volunteer_id] = None
+    return volunteer_cache[volunteer_id]
 
 
 @ball.route('/')
@@ -209,6 +183,8 @@ def volunteers():
         ))
     db = DB()
     for db_id, id, access in db.volunteers():
+        if id in config.allowed_users:
+          continue
         volunteer = volunteer_get(id)
         if volunteer is None:
             volunteer_str = design.volunteer(id=str(id))
@@ -579,7 +555,7 @@ def check_auth(request):
     user_ok = user_id in config.allowed_users
     if not user_ok:
         db = DB()
-        user_ok = db.volunteer_get(user_id)
+        user_ok = db.volunteer_has_access(user_id)
         db.close(commit=True)
     user_cache[user_id] = user_id, auth_html, user_ok
     return user_cache[user_id]
@@ -610,7 +586,7 @@ def auth_vk_done():
     except:
         code = 'None'
     try:
-        user_id = auth.vk.do (code)
+        (user_id, name, url) = auth.vk.do (code)
     except auth.AuthentificationError as error:
         error_content = 'Failed auth: ' + str(error)
         return render_template(
@@ -618,6 +594,9 @@ def auth_vk_done():
             title='Failed auth',
             base=config.base_url,
             content=error_content)
+    db = DB()
+    db.volunteer_create(user_id, name, url)
+    db.close(commit=True)
     auth_token = auth.create_token(user_id)
     resp = make_response(redirect(url_for('index')))
     resp.set_cookie('ball_auth_token', auth_token)
@@ -637,13 +616,16 @@ def auth_google_done():
     except:
         code = 'None'
     try:
-        user_id = auth.google.do(code)
+        user_id, name, url = auth.google.do(code)
     except auth.AuthentificationError as error:
         error_content = 'Failed auth: ' + str(error)
         return render_template('template.html',
                                title='Failed auth',
                                base=config.base_url,
                                content=error_content)
+    db = DB()
+    db.volunteer_create(user_id, name, url)
+    db.close(commit=True)
     auth_token = auth.create_token(user_id)
     resp = make_response(redirect(url_for('index')))
     resp.set_cookie('ball_auth_token', auth_token)

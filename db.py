@@ -177,19 +177,32 @@ class DB:
             teams.append(t)
         return teams
 
+    def volunteer_create(self, id, name, url):
+        print('creating ', id, ' ', name)
+        print(self.__cursor.execute(
+            'insert into `volunteers` (`external_id`, `name`, `url`)'+
+            ' values(%(id)s, %(name)s, %(url)s) on duplicate key update `name`=%(name)s, `url`=%(url)s',
+            {'id': id, 'name': name, 'url': url}
+        ))
+
     def volunteer_get(self, id):
         self.__cursor.execute(
+            'select `name`, `url` from `volunteers`' +
+            ' where `external_id`=%s',
+            [id]
+        )
+        for row in self.__cursor.fetchall():
+            return row
+        return (None, None)
+
+    def volunteer_has_access(self, id):
+        self.__cursor.execute(
             'select `access` from `volunteers`' +
-            ' where `external_id`=%s for update',
+            ' where `external_id`=%s',
             [id]
         )
         for row in self.__cursor.fetchall():
             return int(row[0]) != 0
-        self.__cursor.execute(
-            'insert into `volunteers` (`external_id`)' +
-            ' values (%s)',
-            [id]
-        )
         return False
 
     def volunteers(self):

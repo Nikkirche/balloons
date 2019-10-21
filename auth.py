@@ -47,7 +47,24 @@ class vk:
         res = json.loads(urllib.request.urlopen(vk_oauth_url).read().decode())
         if 'error' in res:
             raise AuthentificationError(str(res['error_description']))
-        return 'vk:' + str(res['user_id'])
+        user_id = str(res['user_id'])
+
+        api_url = "https://api.vk.com/method/users.get?" + \
+            urllib.parse.urlencode({
+            'user_ids': user_id,
+            'access_token': config.vk_access_token,
+            'v': 5.92,
+            })
+        res = json.loads(urllib.request.urlopen(api_url).read().decode())
+        if 'error' in res:
+            raise AuthentificationError(str(res['error_description']))
+
+        res = res['response'][0]
+
+        name = "%s %s" % (res['first_name'], res['last_name'])
+        url = "https://vk.com/id%s" % res['id']
+
+        return ('vk:' + user_id, name, url)
 
 
 class google:
@@ -77,5 +94,6 @@ class google:
         token = jwt.decode(res['id_token'], verify=False)
         sub = token['sub']
         name = token.get('name', sub)
-        return 'google:' + sub
+        url = token.get('picture', '')
+        return ('google:' + sub, name, url)
 
