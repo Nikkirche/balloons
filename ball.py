@@ -391,6 +391,8 @@ def event(event, hall):
             return ''
         balloons_html = []
         for b in balloons:
+            if config.hall_by_team_name(teams[teams_map[b.team_id]]['name']) is None:
+              continue
             p = problems[problems_map[b.problem_id]]
             t = teams[teams_map[b.team_id]]
             state_str = get_state_str(event_id, b, user_id=user_id, hall=hall)
@@ -432,6 +434,8 @@ def event(event, hall):
     balloons = list (map (Balloon, reversed (balloons)))
     if (hall != 0):
       balloons = [b for b in balloons if config.hall_by_team_name(teams[teams_map[b.team_id]]['name']) == hall]
+    else:
+      balloons = [b for b in balloons if config.hall_by_team_name(teams[teams_map[b.team_id]]['name']) is not None]
     content += get_balloons_html(
         lang.lang['event_header_offer'],
         get_state_str_queue, balloons
