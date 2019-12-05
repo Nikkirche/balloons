@@ -231,6 +231,44 @@ def volunteers():
     return response
 
 
+@ball.route('/event<int:event>/stats')
+def event_stats(event):
+    db = DB()
+    stats = db.volunteer_stats(event)
+    volunteers = []
+    for (id, count) in stats:
+        if not id:
+            continue
+        volunteer = volunteer_get(id)
+        if volunteer is None:
+            volunteer_str = design.volunteer(id=str(id))
+        else:
+            volunteer_name, volunteer_link = volunteer
+            volunteer_str = ' ' + design.volunteer_ext(
+                name=volunteer_name,
+                url=volunteer_link
+            )
+        volunteers.append(
+            design.volunteer_stat(
+              name=volunteer_str,
+              result=count
+            )
+        )
+    e = db.event(event)
+    event_str = design.event_link(url=url_for('event', event=e[0], hall=0), name=e[1])
+    db.close()
+    volunteers = ''.join(volunteers)
+    content = design.volunteer_stats(stats=volunteers, event=event_str)
+    response = make_response (render_template(
+        'template.html',
+        title=lang.lang['volunteers_title'],
+        base=config.base_url,
+        content=content
+    ))
+    return response
+
+
+
 @ball.route('/problem<int:problem>')
 def problem(problem):
     user_id, auth_html, user_ok = check_auth(request)
@@ -346,6 +384,7 @@ def event(event, hall):
         'url': e[3]}
     event_html = ''
     event_html += design.standings_link(url=url_for('event_standings', event=event_id))
+    event_html += design.stats_link(url=url_for('event_stats', event=event_id))
     content += event_html
     content += design.halls_list(event_id=event_id, current_hall=hall)
 

@@ -226,6 +226,17 @@ class DB:
             [1 if value else 0, id]
         )
 
+    def volunteer_stats(self, event_id):
+        self.__cursor.execute(
+            'select volunteer_id, count(*) as c from balloons' +
+            ' where event_id = %s group by volunteer_id order by c desc',
+            [event_id]
+        )
+        stats = []
+        for row in self.__cursor.fetchall():
+            stats.append(row)
+        return stats
+
     def fts(self, event_id, *, problem_id=None, team_id=None):
         self.__cursor.execute(
             'select id from balloons' +

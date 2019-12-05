@@ -148,6 +148,13 @@ def standings_link(*, url):
         lang.lang['event_header_monitor_link'] + '</a></div>\n'
     ) % url
 
+def stats_link(*, url):
+    url = escape(url)
+    return (
+        '<div><a href="%s">' +
+        lang.lang['event_header_stats_link'] + '</a></div>\n'
+    ) % url
+
 @arguments(name_full=escape, name_short=escape)
 def standings_problem(*, name_full, name_short):
     return (
@@ -250,7 +257,7 @@ def volunteer_noaccess(*, name, change):
     ) % (name, change)
 
 def table(*, header, content):
-    header = escape(header)
+#    header = escape(header)
     return (
         '<h2>%s</h2>\n' +
         '<table style="width: 100%%;">\n' +
@@ -268,6 +275,18 @@ def problems(*, problems):
 
 def volunteers(*, volunteers):
     return table(content=volunteers, header=lang.lang['header_volunteers'])
+
+def volunteer_stats(*, stats, event):
+    return table(content=stats, header=lang.lang['header_volunteer_stats'] + event)
+
+def volunteer_stat(*, name, result):
+    return (
+        '<tr>' +
+        '<td>%s</td>' +
+        '<td>%s</td>' +
+        '</tr>\n'
+    ) % (name, result)
+
 
 def auth(*, url):
     url = escape(url)
@@ -289,12 +308,12 @@ def auth_link(*, url, label):
 
 def volunteer(*, id):
     id = escape(id)
-    return ' (%s)' % id
+    return '%s' % id
 
 def volunteer_ext(*, name, url):
     name = escape(name)
     url = escape(url)
-    return ' (<a href="%s">%s</a>)' % (url, name)
+    return '<a href="%s">%s</a>' % (url, name)
 
 def halls_list(*, event_id, current_hall):
     content = ('<table><tr class="balloons_row"><td>' +

@@ -6,6 +6,7 @@ lang_ru = {
     'balloon_state_wanted': '',
 
     'event_header_monitor_link': 'Таблица шариков',
+    'event_header_stats_link': 'Статистика',
     'event_header_offer': 'Предлагаем отнести',
     'event_header_problems': 'Задачи',
     'event_header_queue': 'Очередь',
@@ -36,6 +37,7 @@ lang_ru = {
 
     'volunteers_title': 'Волонтёры',
     'header_volunteers': 'Волонтёры',
+    'header_volunteer_stats': 'Статистика по шарикам в ',
     'volunteer_from_config': 'Убрать доступ невозможно',
 
     'color_set_new': 'Новый цвет:',
