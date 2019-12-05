@@ -61,8 +61,8 @@ def parse_pcms(data, *, callback_ok, callback_team, callback_problem, callback_c
                 callback_problem(problem.attrib['alias'], problem.attrib['name'])
         elif child.tag == 'session':
             id = child.attrib['alias']
-            if config.hall_by_team_name(id) is None:
-                continue
+#            if config.hall_by_team_name(id) is None:
+#                continue
             callback_team(id, child.attrib['party'])
             # callback_team(child.attrib['id'], child.attrib['party'])
             for problem in child:
