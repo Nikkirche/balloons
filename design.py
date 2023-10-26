@@ -225,7 +225,7 @@ def fts_no(*, text):
 def balloon(*, color, color_token, problem_comment, letter, team_comment, team_short, team, state):
     color = escape(color)
     letter = escape(letter)
-    team_short = escape(team_short)
+    team_short = escape(str(team_short))
     team = escape(team)
     return (
         '<tr class="balloons_row">' +

@@ -39,7 +39,7 @@ class DB:
 
     def events(self):
         events = []
-        self.__cursor.execute('select id, name, state, url from events')
+        self.__cursor.execute('select id, name, state, url from events order by id desc')
         for row in self.__cursor.fetchall():
             events.append(row)
         return events

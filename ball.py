@@ -39,6 +39,8 @@ def action_access_refuse(db, *, id):
 
 @arguments(None, url=str)
 def action_event_add(db, *, url):
+    if not url.strip() or not url.startswith("http"):
+      return abort(418)
     db.event_add(1, url)
     return redirect(url_for('index'))
 
@@ -129,11 +131,13 @@ def index():
     else:
         event_link = design.event_nolink
     for e in events:
+        if not e[2]:
+          continue
         if e[1]:
             content += event_link(url=url_for('event', event=e[0], hall=0), name=e[1])
         else:
             content += design.event_nolink(name=e[3])
-    if user_ok:
+    if user_ok and user_id in config.allowed_users:
         content += design.action_form_event(arguments={
             'method': 'event_add',
         })
@@ -347,7 +351,7 @@ def get_state_str_queue(event_id, b, *, user_id, hall=0):
         state_str = design.text(text=lang.lang['balloon_state_delivered'])
     else:
         state_str = design.text(lang.lang['balloon_state_error'])
-    if str(b.volunteer_id) != '':
+    if b.state >= 100 and str(b.volunteer_id) != '':
         volunteer = volunteer_get (str(b.volunteer_id))
         if volunteer is None:
             state_str += ' ' + design.volunteer(id=str(b.volunteer_id))
@@ -453,7 +457,7 @@ def event(event, hall):
                 problem_comment=x,
                 letter=p['letter'],
                 team_comment=y,
-                team_short=t['name'],
+                team_short=config.get_id(t['name']),
                 team=t['long_name'],
                 state=state_str
             ))
@@ -501,6 +505,9 @@ def event(event, hall):
     ))
     token = auth.create_token(user_id, add_random=True)
     response.set_cookie('ball_token', token)
+    refresh = request.args.get('refresh', None)
+    if refresh:
+      response.headers["Refresh"] = refresh + ";url=" + request.url
     return response
 
 
@@ -539,11 +546,11 @@ def event_standings(event):
     standings_header = ''.join(problems_header)
     teams = []
     content = '<table>'
-    for t in sorted(db.teams(event_id), key=lambda t: t['name']):
+    for t in sorted(db.teams(event_id), key=lambda t: str(config.get_id(t['name']))):
         if config.hall_by_team_name(t['name']) is None:
           continue
         content += '<tr>'
-        content += '<td style="font-size: large">%s</td><td>&nbsp;</td>' % t['name']
+        content += '<td style="font-size: large">%s</td><td>&nbsp;</td>' % config.get_id(t['name'])
         for p in problems:
             key = (t['id'], p['id'])
             if key in oks:

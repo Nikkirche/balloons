@@ -115,7 +115,11 @@ for event_id, event_url, event_name in events:
         balloon_id, problem_id, team_id = row
         balloon_cache[(event_id, problem_id, team_id)] = balloon_id
     haved_balloons = 0
-    contest_dat = urllib.request.urlopen(event_url).read()
+    try:
+      contest_dat = urllib.request.urlopen(event_url).read()
+    except:
+      print("Failed to get ", event_name)
+      continue
 
     def callback_ok(team_name, problem_letter, time_local):
         global cur, balloon_cache, haved_balloons
