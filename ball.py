@@ -177,6 +177,7 @@ def volunteers():
             change = design.text(text=lang.lang['volunteer_from_config'])
         volunteers.append(design.volunteer_access(
             name=volunteer_str,
+            id=id,
             change=change
         ))
     db = DB()
@@ -218,6 +219,7 @@ def volunteers():
             design.volunteer_access if access else design.volunteer_noaccess
         )(
             name=volunteer_str,
+            id=id,
             change=change
         ))
     db.close()

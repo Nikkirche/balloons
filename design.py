@@ -238,23 +238,25 @@ def balloon(*, color, color_token, problem_comment, letter, team_comment, team_s
         '</tr>\n'
     ) % (color, color_token, problem_comment, letter, team_comment, team_short, state, team)
 
-def volunteer_access(*, name, change):
+def volunteer_access(*, name, id, change):
     return (
         '<tr>' +
+        '<td>%s</td>' +
         '<td>%s</td>' +
         '<td style="color: green; size: 8pt;">' + lang.lang['access_yes'] + '</td>' +
         '<td>%s</td>' +
         '</tr>\n'
-    ) % (name, change)
+    ) % (name, id, change)
 
-def volunteer_noaccess(*, name, change):
+def volunteer_noaccess(*, name, id, change):
     return (
         '<tr>' +
+        '<td>%s</td>' +
         '<td>%s</td>' +
         '<td style="color: red; size: 8pt;">' + lang.lang['access_no'] + '</td>' +
         '<td>%s</td>' +
         '</tr>\n'
-    ) % (name, change)
+    ) % (name, id, change)
 
 def table(*, header, content):
 #    header = escape(header)
