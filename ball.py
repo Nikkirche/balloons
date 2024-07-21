@@ -676,6 +676,6 @@ if __name__ == '__main__':
     handler = LoggerHandler()
     handler.setLevel(logging.DEBUG)
     ball.logger.addHandler(handler)
-    ball.run(host=webc['host'], port=webc['port'])
-
-
+    ball.run(host=webc['host'], port=webc['port'],
+             ssl_context=('cert.pem', 'key.pem'),
+             )

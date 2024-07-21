@@ -91,7 +91,7 @@ class google:
         res = json.loads(response.read().decode())
         if 'error' in res:
             raise AuthentificationError(str(res['error_description']))
-        token = jwt.decode(res['id_token'], verify=False)
+        token = jwt.decode(res['id_token'], verify=False,algorithms=['RS256'])
         sub = token['sub']
         name = token.get('name', sub)
         url = token.get('picture', '')
