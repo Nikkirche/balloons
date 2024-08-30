@@ -134,7 +134,7 @@ def index():
         if not e[2]:
           continue
         if e[1]:
-            content += event_link(url=url_for('event', event=e[0], hall=0), name=e[1])
+            content += event_link(url=url_for('event', event=e[0], hall='all'), name=e[1])
         else:
             content += design.event_nolink(name=e[3])
     if user_ok and user_id in config.allowed_users:
@@ -258,7 +258,7 @@ def event_stats(event):
             )
         )
     e = db.event(event)
-    event_str = design.event_link(url=url_for('event', event=e[0], hall=0), name=e[1])
+    event_str = design.event_link(url=url_for('event', event=e[0], hall='all'), name=e[1])
     db.close()
     volunteers = ''.join(volunteers)
     content = design.volunteer_stats(stats=volunteers, event=event_str)
@@ -328,7 +328,7 @@ def get_state_str_current(event_id, b, *, user_id, hall):
     return state_str
 
 
-def get_state_str_queue(event_id, b, *, user_id, hall=0):
+def get_state_str_queue(event_id, b, *, user_id, hall='all'):
     state_str = None
     if b.state >= 0 and b.state < 100:
         state_str = (
@@ -365,9 +365,9 @@ def get_state_str_queue(event_id, b, *, user_id, hall=0):
 
 @ball.route('/event<int:eventp>')
 def event_nohall(eventp):
-  return event(eventp, 0)
+  return event(eventp, 'all')
 
-@ball.route('/event<int:event>_<int:hall>')
+@ball.route('/event<int:event>_<string:hall>')
 def event(event, hall):
     user_id, auth_html, user_ok = check_auth(request)
     if not user_ok:
@@ -381,15 +381,15 @@ def event(event, hall):
         e = None
     if e is None:
         return redirect(url_for('index'))
+    halls = db.halls(event_id)
     event = {
         'name': e[1],
-        'state': e[2],
-        'url': e[3]}
+        'state': e[2]}
     event_html = ''
     event_html += design.standings_link(url=url_for('event_standings', event=event_id))
     event_html += design.stats_link(url=url_for('event_stats', event=event_id))
     content += event_html
-    content += design.halls_list(event_id=event_id, current_hall=hall)
+    content += design.halls_list(event_id=event_id, current_hall=hall, hall_list=halls)
 
     problems = db.problems(event_id)
     problems_map = {p['id']: i for i, p in enumerate (problems)}
@@ -474,7 +474,7 @@ def event(event, hall):
     )
     balloons = db.balloons_new(event_id)
     balloons = list (map (Balloon, reversed (balloons)))
-    if (hall != 0):
+    if (hall != 'all'):
       balloons = [b for b in balloons if teams[teams_map[b.team_id]]['hall'] == hall]
     else:
       balloons = [b for b in balloons if teams[teams_map[b.team_id]]['hall'] is not None]
@@ -524,7 +524,6 @@ def event_standings(event):
     event = {
         'name': e[1],
         'state': e[2],
-        'url': e[3]
     }
     problems_header = []
     problems = db.problems(event_id)

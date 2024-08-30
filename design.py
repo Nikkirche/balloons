@@ -317,21 +317,21 @@ def volunteer_ext(*, name, url):
     url = escape(url)
     return '<a href="%s">%s</a>' % (url, name)
 
-def halls_list(*, event_id, current_hall):
+def halls_list(*, event_id, current_hall, hall_list):
     content = ('<table><tr class="balloons_row"><td>' +
       lang.lang['event_halls_list_header'] +
       ': </td>')
-    if current_hall != 0:
-      content += ('<td><a href="/event%d_0">' +
+    if current_hall != 'all':
+      content += ('<td><a href="/event%d_all">' +
         lang.lang['event_halls_list_all'] +
         '</a></td>') % event_id
     else:
       content += '<td>' + lang.lang['event_halls_list_all'] + '</td>'
-    for hall in range(1, 10):
+    for hall in hall_list:
       if current_hall == hall:
-        content += '<td>&nbsp;</td><td>%d</td>' % hall
+        content += f'<td>&nbsp;</td><td>{hall}</td>'
       else:
-        content += '<td>&nbsp;</td><td><a href="/event%d_%d">%d</a></td>' % (event_id, hall, hall)
+        content += f'<td>&nbsp;</td><td><a href="/event{event_id}_{hall}">{hall}</a></td>'
     content += '</tr></table>'
     return content
 

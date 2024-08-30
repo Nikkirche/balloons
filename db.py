@@ -29,7 +29,7 @@ class DB:
 
     def event(self, event_id):
         self.__cursor.execute(
-            'select id, name, state, url from events' +
+            'select id, name, state from events' +
             ' where id=%s',
             [event_id]
         )
@@ -39,17 +39,10 @@ class DB:
 
     def events(self):
         events = []
-        self.__cursor.execute('select id, name, state, url from events order by id desc')
+        self.__cursor.execute('select id, name, state from events order by id desc')
         for row in self.__cursor.fetchall():
             events.append(row)
         return events
-
-    def event_add(self, state, url):
-        self.__cursor.execute(
-            'insert into events (state, url) values (%s, %s)',
-            [state, url]
-        )
-
     def problem(self, problem_id):
         self.__cursor.execute(
             'select id, letter, color, name from problems' +
@@ -251,4 +244,15 @@ class DB:
         for row in self.__cursor.fetchall():
             return row[0]
         raise KeyError
+
+    def halls(self, event_id):
+        self.__cursor.execute(
+            'select distinct  hall from teams' +
+            ' where event_id=%s',
+            [event_id]
+        )
+        hall_list = []
+        for row in self.__cursor.fetchall():
+            hall_list.append(row[0])
+        return hall_list
 
