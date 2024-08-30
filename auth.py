@@ -1,4 +1,3 @@
-
 import hashlib
 import json
 import random
@@ -8,6 +7,7 @@ import urllib
 import config
 import jwt
 
+
 class AuthentificationError(Exception):
     pass
 
@@ -16,13 +16,14 @@ def create_token(user_id, *, add_random=False):
     day = int(time.time() / (24 * 60 * 60))
     extra = ''
     if add_random:
-        extra = ':' + ''.join(map(lambda x: chr(x + ord('a')), [random.choice(range (26)) for nonce in range(40)]))
+        extra = ':' + ''.join(map(lambda x: chr(x + ord('a')), [random.choice(range(26)) for nonce in range(40)]))
     return hashlib.sha256((
-        str(user_id) + ':' +
-        str(day) + ':' +
-        config.auth_salt +
-        extra
-    ).encode()).hexdigest()
+                                  str(user_id) + ':' +
+                                  str(day) + ':' +
+                                  config.auth_salt +
+                                  extra
+                          ).encode()).hexdigest()
+
 
 def check(user_id, token):
     return token == create_token(user_id)
@@ -50,11 +51,11 @@ class vk:
         user_id = str(res['user_id'])
 
         api_url = "https://api.vk.com/method/users.get?" + \
-            urllib.parse.urlencode({
-            'user_ids': user_id,
-            'access_token': config.vk_access_token,
-            'v': 5.92,
-            })
+                  urllib.parse.urlencode({
+                      'user_ids': user_id,
+                      'access_token': config.vk_access_token,
+                      'v': 5.92,
+                  })
         res = json.loads(urllib.request.urlopen(api_url).read().decode())
         if 'error' in res:
             raise AuthentificationError(str(res['error_description']))
@@ -91,9 +92,8 @@ class google:
         res = json.loads(response.read().decode())
         if 'error' in res:
             raise AuthentificationError(str(res['error_description']))
-        token = jwt.decode(res['id_token'], verify=False,algorithms=['RS256'])
+        token = jwt.decode(res['id_token'], options={"verify_signature": False}, algorithms=['RS256'])
         sub = token['sub']
         name = token.get('name', sub)
         url = token.get('picture', '')
         return ('google:' + sub, name, url)
-

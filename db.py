@@ -170,7 +170,7 @@ class DB:
     def teams(self, event_id):
         teams = []
         self.__cursor.execute(
-            'select id, name, long_name from teams' +
+            'select id, name, long_name, place, hall from teams' +
             ' where event_id=%s',
             [event_id]
         )
@@ -178,7 +178,9 @@ class DB:
             t = {
                 'id': row[0],
                 'name': row[1],
-                'long_name': row[2]
+                'long_name': row[2],
+                'place': row[3],
+                'hall': row[4]
             }
             teams.append(t)
         return teams

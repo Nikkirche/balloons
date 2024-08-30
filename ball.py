@@ -138,9 +138,6 @@ def index():
         else:
             content += design.event_nolink(name=e[3])
     if user_ok and user_id in config.allowed_users:
-        content += design.action_form_event(arguments={
-            'method': 'event_add',
-        })
         content += design.link(url=url_for('volunteers'), label=lang.lang['access_manage'])
     response = make_response(render_template(
         'template.html',
@@ -436,7 +433,7 @@ def event(event, hall):
             return ''
         balloons_html = []
         for b in balloons:
-            if config.hall_by_team_name(teams[teams_map[b.team_id]]['name']) is None:
+            if teams[teams_map[b.team_id]]['hall'] is None:
               continue
             p = problems[problems_map[b.problem_id]]
             t = teams[teams_map[b.team_id]]
@@ -478,9 +475,9 @@ def event(event, hall):
     balloons = db.balloons_new(event_id)
     balloons = list (map (Balloon, reversed (balloons)))
     if (hall != 0):
-      balloons = [b for b in balloons if config.hall_by_team_name(teams[teams_map[b.team_id]]['name']) == hall]
+      balloons = [b for b in balloons if teams[teams_map[b.team_id]]['hall'] == hall]
     else:
-      balloons = [b for b in balloons if config.hall_by_team_name(teams[teams_map[b.team_id]]['name']) is not None]
+      balloons = [b for b in balloons if teams[teams_map[b.team_id]]['hall'] is not None]
     content += get_balloons_html(
         lang.lang['event_header_offer'],
         get_state_str_queue, balloons
@@ -549,7 +546,7 @@ def event_standings(event):
     teams = []
     content = '<table>'
     for t in sorted(db.teams(event_id), key=lambda t: str(config.get_id(t['name']))):
-        if config.hall_by_team_name(t['name']) is None:
+        if t['hall'] is None:
           continue
         content += '<tr>'
         content += '<td style="font-size: large">%s</td><td>&nbsp;</td>' % config.get_id(t['name'])
