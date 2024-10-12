@@ -290,14 +290,15 @@ def volunteer_stat(*, name, result):
     ) % (name, result)
 
 
-def auth(*, url):
-    url = escape(url)
+def auth(*, url_login, url_register):
+    url_login = escape(url_login)
+    url_register = escape(url_register)
     return (
         '<div>' + lang.lang['index_not_authorised'] +
-        ' <a href="%s">' +
-        lang.lang['index_log_in'] +
-        '</a></div>\n'
-    ) % url
+        f' <a href="{url_login}"> {lang.lang['index_log_in']}</a>' +
+        f' <a href="{url_register}"> {lang.lang['index_register']}</a>' +
+        '</div>\n'
+    )
 
 def auth_ok(*, user):
     user = escape(user)
@@ -312,10 +313,9 @@ def volunteer(*, id):
     id = escape(id)
     return '%s' % id
 
-def volunteer_ext(*, name, url):
+def volunteer_ext(*, name):
     name = escape(name)
-    url = escape(url)
-    return '<a href="%s">%s</a>' % (url, name)
+    return '<a>%s</a>' % name
 
 def halls_list(*, event_id, current_hall, hall_list):
     content = ('<table><tr class="balloons_row"><td>' +
@@ -335,3 +335,46 @@ def halls_list(*, event_id, current_hall, hall_list):
     content += '</tr></table>'
     return content
 
+def register_form(err = None):
+    content = """
+        <form method="POST" action="/register">
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="text" name="login" placeholder="Логин" autofocus="">
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="text" name="name" placeholder="Имя" autofocus="">
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="password" name="password" placeholder="Пароль">
+                </div>
+            </div>
+            <button class="button is-block is-info is-large is-fullwidth">Login</button>
+        </form>"""
+    if err is not None:
+        pass
+    return content
+
+def login_form(err = None):
+    content = """
+        <form method="POST" action="/login">
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="text" name="login" placeholder="Логин" autofocus="">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="password" name="password" placeholder="Пароль">
+                </div>
+            </div>
+            <button class="button is-block is-info is-large is-fullwidth">Login</button>
+        </form>"""
+    if err is not None:
+        pass
+    return content

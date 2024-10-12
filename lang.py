@@ -24,6 +24,7 @@ lang_ru = {
 
     'index_add_event': 'Добавить соревнование',
     'index_log_in': 'Войти',
+    'index_register': 'Зарегистрироваться',
     'index_monitor_url': 'URL монитора',
     'index_no_events': 'Нет соревнований',
     'index_not_authorised': 'Вы не авторизованы.',

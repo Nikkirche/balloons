@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 
-from flask import Flask, abort, render_template, request, make_response, redirect, url_for
-import json, sys, urllib
 import logging
+import sys
 
-from miscellaneous import *
+from flask import Flask, abort, render_template, request, make_response, redirect, url_for, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+
 import auth
-import lang
-import design
 import config
+import design
+import lang
 from balloon import Balloon
 from db import DB
+from miscellaneous import *
 
 ball = Flask(__name__)
 actions = {}
@@ -27,14 +29,14 @@ def page(*, title, content):
 
 # actions: methods that modify something
 
-@arguments(None, id=int)
-def action_access_grant(db, *, id):
-    db.volunteer_access(id, True)
+@arguments(None, name=str)
+def action_access_grant(db, *, name):
+    db.volunteer_access(name, True)
     return redirect(url_for('volunteers'))
 
-@arguments(None, id=int)
-def action_access_refuse(db, *, id):
-    db.volunteer_access(id, False)
+@arguments(None, name = str)
+def action_access_refuse(db, *, name):
+    db.volunteer_access(name, False)
     return redirect(url_for('volunteers'))
 
 @arguments(None, url=str)
@@ -49,17 +51,17 @@ def action_color_set(db, *, problem, value):
     db.problem_color(problem, value)
     return redirect(url_for("problem", problem=problem))
 
-@arguments(None, event=int, balloon=int, volunteer=str, hall=int)
+@arguments(None, event=int, balloon=int, volunteer=str, hall=str)
 def action_balloon_done(db, *, event, balloon, volunteer, hall):
     db.balloon_done(balloon, volunteer)
     return redirect(url_for("event", event=event, hall=hall))
 
-@arguments(None, event=int, balloon=int, hall=int)
+@arguments(None, event=int, balloon=int, hall=str)
 def action_balloon_drop(db, *, event, balloon, hall):
     db.balloon_drop(balloon)
     return redirect(url_for("event", event=event, hall=hall))
 
-@arguments(None, event=int, balloon=int, volunteer=str, hall=int)
+@arguments(None, event=int, balloon=int, volunteer=str, hall=str)
 def action_balloon_take(db, *, event, balloon, volunteer, hall):
     balloon = db.balloon(balloon, lock=True)
     if balloon is None:
@@ -80,7 +82,7 @@ def do_action_mk2():
     token_cookie = request.cookies.get('ball_token')
     if token != token_cookie or len(token) < 10:
         print ("token mismatch: %s vs %s" % (repr (token), repr (token_cookie)), file=sys.stderr)
-        return abort(403);
+        return abort(403)
     try:
         callback = {
             'access_grant': action_access_grant,
@@ -108,10 +110,10 @@ def volunteer_get(volunteer_id):
     if volunteer_id in volunteer_cache:
         return volunteer_cache[volunteer_id]
     db = DB()
-    name, url = db.volunteer_get(volunteer_id)
+    name, _ = db.volunteer_get(volunteer_id)
     db.close()
     if name:
-      volunteer_cache[volunteer_id] = (name, url)
+      volunteer_cache[volunteer_id] = name
     else:
       volunteer_cache[volunteer_id] = None
     return volunteer_cache[volunteer_id]
@@ -163,10 +165,8 @@ def volunteers():
         if volunteer is None:
             volunteer_str = design.volunteer(id=str(id))
         else:
-            volunteer_name, volunteer_link = volunteer
             volunteer_str = ' ' + design.volunteer_ext(
-                name=volunteer_name,
-                url=volunteer_link
+                name=volunteer,
             )
         if id == user_id:
             change = design.text(text=lang.lang['this_is_you'])
@@ -185,10 +185,8 @@ def volunteers():
         if volunteer is None:
             volunteer_str = design.volunteer(id=str(id))
         else:
-            volunteer_name, volunteer_link = volunteer
             volunteer_str = ' ' + design.volunteer_ext(
-                name=volunteer_name,
-                url=volunteer_link
+                name=volunteer,
             )
         if id == user_id:
             change = design.text(text=lang.lang['this_is_you'])
@@ -200,7 +198,7 @@ def volunteers():
             change = design.action_link_mk2(
                 arguments={
                     'method': 'access_refuse',
-                    'id': db_id
+                    'name': db_id
                 },
                 label=lang.lang['access_refuse']
             )
@@ -208,7 +206,7 @@ def volunteers():
             change = design.action_link_mk2(
                 arguments={
                     'method': 'access_grant',
-                    'id': db_id
+                    'name': db_id
                 },
                 label=lang.lang['access_grant']
             )
@@ -246,10 +244,8 @@ def event_stats(event):
         if volunteer is None:
             volunteer_str = design.volunteer(id=str(id))
         else:
-            volunteer_name, volunteer_link = volunteer
             volunteer_str = ' ' + design.volunteer_ext(
-                name=volunteer_name,
-                url=volunteer_link
+                name=volunteer
             )
         volunteers.append(
             design.volunteer_stat(
@@ -355,10 +351,8 @@ def get_state_str_queue(event_id, b, *, user_id, hall='all'):
         if volunteer is None:
             state_str += ' ' + design.volunteer(id=str(b.volunteer_id))
         else:
-            volunteer_name, volunteer_link = volunteer
             state_str += '</td><td>' + design.volunteer_ext(
-                name=volunteer_name,
-                url=volunteer_link
+                name=volunteer
             )
     return state_str
 
@@ -433,8 +427,9 @@ def event(event, hall):
             return ''
         balloons_html = []
         for b in balloons:
-            if teams[teams_map[b.team_id]]['hall'] is None:
-              continue
+            #now normal situation if no mapping is there
+            # if teams[teams_map[b.team_id]]['hall'] is None:
+            #   continue
             p = problems[problems_map[b.problem_id]]
             t = teams[teams_map[b.team_id]]
             state_str = get_state_str(event_id, b, user_id=user_id, hall=hall)
@@ -474,10 +469,12 @@ def event(event, hall):
     )
     balloons = db.balloons_new(event_id)
     balloons = list (map (Balloon, reversed (balloons)))
-    if (hall != 'all'):
+    if hall == "None":
+      balloons = [b for b in balloons if teams[teams_map[b.team_id]]['hall'] is None]
+    elif hall != 'all':
       balloons = [b for b in balloons if teams[teams_map[b.team_id]]['hall'] == hall]
     else:
-      balloons = [b for b in balloons if teams[teams_map[b.team_id]]['hall'] is not None]
+      balloons = [b for b in balloons]
     content += get_balloons_html(
         lang.lang['event_header_offer'],
         get_state_str_queue, balloons
@@ -545,8 +542,9 @@ def event_standings(event):
     teams = []
     content = '<table>'
     for t in sorted(db.teams(event_id), key=lambda t: str(config.get_id(t['name']))):
-        if t['hall'] is None:
-          continue
+        # normal sitaution - no mapping
+        # if t['hall'] is None:
+        #   continue
         content += '<tr>'
         content += '<td style="font-size: large">%s</td><td>&nbsp;</td>' % config.get_id(t['name'])
         for p in problems:
@@ -569,7 +567,7 @@ def event_standings(event):
 
 user_cache = {}
 def check_auth(request):
-    auth_html = design.auth(url=url_for('method_auth'))
+    auth_html = design.auth(url_login=url_for('method_login'), url_register=url_for('method_register'))
     try:
         user_id = request.cookies.get('ball_user_id')
         auth_token = request.cookies.get('ball_auth_token')
@@ -589,77 +587,53 @@ def check_auth(request):
     user_cache[user_id] = user_id, auth_html, user_ok
     return user_cache[user_id]
 
-
-@ball.route('/auth')
-def method_auth():
+def setLoginCookies(login):
+    auth_token = auth.create_token(login)
+    resp = make_response(redirect(url_for('index')))
+    resp.set_cookie('ball_auth_token', auth_token)
+    resp.set_cookie('ball_user_id', login)
+    return resp
+@ball.get('/login')
+def method_login():
     user_id, auth_html, user_ok= check_auth(request)
-    content = design.auth_link(url=url_for('auth_vk_start'), label='VK') + \
-        design.auth_link(url=url_for('auth_google_start'), label='Google')
-    return render_template(
-        'template.html',
+    content = design.login_form()
+    return page(
         title=lang.lang['auth'],
-        auth=auth_html,
-        base=config.base_url,
-        content=content)
-
-
-@ball.route('/auth/vk/start')
-def auth_vk_start():
-    return redirect(auth.vk.url)
-
-
-@ball.route('/auth/vk/done')
-def auth_vk_done():
-    try:
-        code = request.args.get('code', '')
-    except:
-        code = 'None'
-    try:
-        (user_id, name, url) = auth.vk.do (code)
-    except auth.AuthentificationError as error:
-        error_content = 'Failed auth: ' + str(error)
-        return render_template(
-            'template.html',
-            title='Failed auth',
-            base=config.base_url,
-            content=error_content)
+        content=content
+    )
+@ball.post('/login')
+def method_login_post():
+    login = request.form.get('login')
+    password = request.form.get('password')
     db = DB()
-    db.volunteer_create(user_id, name, url)
-    db.close(commit=True)
-    auth_token = auth.create_token(user_id)
-    resp = make_response(redirect(url_for('index')))
-    resp.set_cookie('ball_auth_token', auth_token)
-    resp.set_cookie('ball_user_id', user_id)
-    return resp
+    if db.volunteer_get(login) == (None, None):
+        return redirect(url_for('login'))
+    _, psw_hash  = db.volunteer_get(login)
+    db.close(commit=False)
+    if not check_password_hash(password, psw_hash):
+        return redirect(url_for('index'))
+    return setLoginCookies(login)
 
+@ball.get('/register')
+def method_register():
+    user_id, auth_html, user_ok= check_auth(request)
+    content = design.register_form()
+    return page(
+        title=lang.lang['auth'],
+        content=content
+    )
 
-@ball.route('/auth/google/start')
-def auth_google_start():
-    return redirect(auth.google.url)
-
-
-@ball.route('/auth/google/done')
-def auth_google_done():
-    try:
-        code = request.args.get('code', '')
-    except:
-        code = 'None'
-    try:
-        user_id, name, url = auth.google.do(code)
-    except auth.AuthentificationError as error:
-        error_content = 'Failed auth: ' + str(error)
-        return render_template('template.html',
-                               title='Failed auth',
-                               base=config.base_url,
-                               content=error_content)
+@ball.post('/register')
+def method_register_post():
+    login = request.form.get('login')
+    name = request.form.get('name')
+    password = request.form.get('password')
     db = DB()
-    db.volunteer_create(user_id, name, url)
+    if db.volunteer_get(login) != (None, None):
+        return redirect(url_for('index'))
+    db.volunteer_create(login, name, generate_password_hash(password))
     db.close(commit=True)
-    auth_token = auth.create_token(user_id)
-    resp = make_response(redirect(url_for('index')))
-    resp.set_cookie('ball_auth_token', auth_token)
-    resp.set_cookie('ball_user_id', user_id)
-    return resp
+    return setLoginCookies(login)
 
 class LoggerHandler (logging.StreamHandler):
     def emit (x, record):

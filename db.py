@@ -178,29 +178,28 @@ class DB:
             teams.append(t)
         return teams
 
-    def volunteer_create(self, id, name, url):
-        print('creating ', id, ' ', name)
+    def volunteer_create(self, login, name, psw_hash):
+        print('creating ', name, ' ')
         print(self.__cursor.execute(
-            'insert into `volunteers` (`external_id`, `name`, `url`)'+
-            ' values(%(id)s, %(name)s, %(url)s) on duplicate key update `name`=%(name)s, `url`=%(url)s',
-            {'id': id, 'name': name, 'url': url}
+            'insert into `volunteers` (`login`, `name`, `password`, `access`)'+
+            f" values ('{login}', '{name}', '{psw_hash}', 0)",
         ))
 
-    def volunteer_get(self, id):
+    def volunteer_get(self, login):
         self.__cursor.execute(
-            'select `name`, `url` from `volunteers`' +
-            ' where `external_id`=%s',
-            [id]
+            'select `name`, `password` from `volunteers`' +
+            ' where `login`=%s',
+            [login]
         )
         for row in self.__cursor.fetchall():
             return row
-        return (None, None)
+        return None, None
 
-    def volunteer_has_access(self, id):
+    def volunteer_has_access(self, login):
         self.__cursor.execute(
             'select `access` from `volunteers`' +
-            ' where `external_id`=%s',
-            [id]
+            ' where `login`=%s',
+            [login]
         )
         for row in self.__cursor.fetchall():
             return int(row[0]) != 0
@@ -208,17 +207,17 @@ class DB:
 
     def volunteers(self):
         self.__cursor.execute(
-            'select `id`, `external_id`, `access` from `volunteers`'
+            'select `login`, `name`, `access` from `volunteers`'
         )
         volunteers = []
         for row in self.__cursor.fetchall():
             volunteers.append(row)
         return volunteers
 
-    def volunteer_access(self, id, value):
+    def volunteer_access(self, login, value):
         self.__cursor.execute(
-            'update `volunteers` set `access`=%s where `id`=%s',
-            [1 if value else 0, id]
+            'update `volunteers` set `access`=%s where `login`=%s',
+            [1 if value else 0, login]
         )
 
     def volunteer_stats(self, event_id):
