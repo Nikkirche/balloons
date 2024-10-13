@@ -295,8 +295,8 @@ def auth(*, url_login, url_register):
     url_register = escape(url_register)
     return (
         '<div>' + lang.lang['index_not_authorised'] +
-        f' <a href="{url_login}"> {lang.lang['index_log_in']}</a>' +
-        f' <a href="{url_register}"> {lang.lang['index_register']}</a>' +
+        f' <a href="{url_login}"> {lang.lang["index_log_in"]}</a>' +
+        f' <a href="{url_register}"> {lang.lang["index_register"]}</a>' +
         '</div>\n'
     )
 
