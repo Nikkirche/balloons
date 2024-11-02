@@ -29,6 +29,13 @@ def page(*, title, content):
 
 # actions: methods that modify something
 
+@arguments(None, name=str, login=str, password=str)
+def action_volunteer_add(db, *, name, login, password):
+    if db.volunteer_get(login) != (None, None):
+        return redirect(url_for('volunteers'))
+    db.volunteer_create(login, name, generate_password_hash(password))
+    return redirect(url_for(endpoint='volunteers'))
+
 @arguments(None, name=str)
 def action_access_grant(db, *, name):
     db.volunteer_access(name, True)
@@ -85,6 +92,7 @@ def do_action_mk2():
         return abort(403)
     try:
         callback = {
+            'volunteer_add' : action_volunteer_add,
             'access_grant': action_access_grant,
             'access_refuse': action_access_refuse,
             'event_add': action_event_add,
@@ -219,7 +227,7 @@ def volunteers():
         ))
     db.close()
     volunteers = ''.join(volunteers)
-    content = design.volunteers(volunteers=volunteers)
+    content = design.add_volunteers() + design.volunteers(volunteers=volunteers)
     response = make_response (render_template(
         'template.html',
         title=lang.lang['volunteers_title'],
@@ -303,7 +311,8 @@ def problem(problem):
 
 
 def get_state_str_current(event_id, b, *, user_id, hall):
-    state_str = design.action_link_mk2(
+    state_str = (design.
+                 action_link_mk2(
         arguments={
             'method': 'balloon_done',
             'event': event_id,
@@ -320,7 +329,7 @@ def get_state_str_current(event_id, b, *, user_id, hall):
             'hall': hall,
         },
         label=lang.lang['event_queue_drop']
-    )
+    ))
     return state_str
 
 
@@ -607,17 +616,20 @@ def method_login_post():
     password = request.form.get('password')
     db = DB()
     if db.volunteer_get(login) == (None, None):
-        return redirect(url_for('login'))
+        return redirect(url_for('method_login'))
     _, psw_hash  = db.volunteer_get(login)
     db.close(commit=False)
-    if not check_password_hash(password, psw_hash):
+    if not check_password_hash(psw_hash, password):
         return redirect(url_for('index'))
     return setLoginCookies(login)
 
 @ball.get('/register')
 def method_register():
     user_id, auth_html, user_ok= check_auth(request)
-    content = design.register_form()
+    if config.registerManually:
+        content = design.register_form()
+    else:
+        content = "Ручная регистрация запрещена - обратитесь к администратору для выдчаи логина и пароля"
     return page(
         title=lang.lang['auth'],
         content=content
@@ -625,15 +637,16 @@ def method_register():
 
 @ball.post('/register')
 def method_register_post():
-    login = request.form.get('login')
-    name = request.form.get('name')
-    password = request.form.get('password')
-    db = DB()
-    if db.volunteer_get(login) != (None, None):
-        return redirect(url_for('index'))
-    db.volunteer_create(login, name, generate_password_hash(password))
-    db.close(commit=True)
-    return setLoginCookies(login)
+    if config.registerManually:
+        login = request.form.get('login')
+        name = request.form.get('name')
+        password = request.form.get('password')
+        db = DB()
+        if db.volunteer_get(login) != (None, None):
+            return redirect(url_for('index'))
+        db.volunteer_create(login, name, generate_password_hash(password))
+        db.close(commit=True)
+        return setLoginCookies(login)
 
 class LoggerHandler (logging.StreamHandler):
     def emit (x, record):
@@ -646,6 +659,5 @@ if __name__ == '__main__':
     handler = LoggerHandler()
     handler.setLevel(logging.DEBUG)
     ball.logger.addHandler(handler)
-    ball.run(host=webc['host'], port=webc['port'],
-             ssl_context=('cert.pem', 'key.pem'),
+    ball.run(host=webc['host'], port=webc['port']
              )

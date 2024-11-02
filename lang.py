@@ -38,6 +38,7 @@ lang_ru = {
 
     'volunteers_title': 'Волонтёры',
     'header_volunteers': 'Волонтёры',
+    'add_volunteers' : 'Добавить волонтёра',
     'header_volunteer_stats': 'Статистика по шарикам в ',
     'volunteer_from_config': 'Убрать доступ невозможно',
 

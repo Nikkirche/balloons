@@ -275,6 +275,10 @@ def problems(*, problems):
         '</tr></table>\n'
     ) % problems
 
+def add_volunteers():
+    res = add_volunteer_form()
+    return res
+
 def volunteers(*, volunteers):
     return table(content=volunteers, header=lang.lang['header_volunteers'])
 
@@ -333,6 +337,21 @@ def halls_list(*, event_id, current_hall, hall_list):
       else:
         content += f'<td>&nbsp;</td><td><a href="/event{event_id}_{hall}">{hall}</a></td>'
     content += '</tr></table>'
+    return content
+
+def add_volunteer_form():
+    global form_id
+    form_id += 1
+    content = f"""
+        <form action="action_mk2" id="form{form_id}" method="POST">
+            <input type="hidden" name="token" value="" /> 
+            <input type="hidden" name="method" value="volunteer_add" />                                   
+            <input class="input is-large" type="text" name="login" placeholder="Логин" autofocus="">
+            <input class="input is-large" type="text" name="name" placeholder="Имя" autofocus="">
+            <input class="input is-large" type="password" name="password" placeholder="Пароль">
+            <span class="link" onclick="balloon_submit_form(\'form{form_id}\'
+            );">Add Volunteer</span>
+        </form>"""
     return content
 
 def register_form(err = None):
