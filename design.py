@@ -277,7 +277,7 @@ def problems(*, problems):
 
 def add_volunteers():
     res = add_volunteer_form()
-    return res
+    return f"<h2>{lang.lang["add_volunteers_header"]}</h2>\n {res}"
 
 def volunteers(*, volunteers):
     return table(content=volunteers, header=lang.lang['header_volunteers'])
@@ -350,11 +350,11 @@ def add_volunteer_form():
             <input class="input is-large" type="text" name="name" placeholder="Имя" autofocus="">
             <input class="input is-large" type="password" name="password" placeholder="Пароль">
             <span class="link" onclick="balloon_submit_form(\'form{form_id}\'
-            );">Add Volunteer</span>
+            );">Добавить</span>
         </form>"""
     return content
 
-def register_form(err = None):
+def register_form():
     content = """
         <form method="POST" action="/register">
             <div class="field">
@@ -374,8 +374,6 @@ def register_form(err = None):
             </div>
             <button class="button is-block is-info is-large is-fullwidth">Login</button>
         </form>"""
-    if err is not None:
-        pass
     return content
 
 def login_form(err = None):
@@ -394,6 +392,4 @@ def login_form(err = None):
             </div>
             <button class="button is-block is-info is-large is-fullwidth">Login</button>
         </form>"""
-    if err is not None:
-        pass
     return content

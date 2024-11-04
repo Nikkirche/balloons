@@ -32,7 +32,7 @@ def page(*, title, content):
 @arguments(None, name=str, login=str, password=str)
 def action_volunteer_add(db, *, name, login, password):
     if db.volunteer_get(login) != (None, None):
-        return redirect(url_for('volunteers'))
+        return redirect(url_for('volunteers', status = 'atErrVadd'))
     db.volunteer_create(login, name, generate_password_hash(password))
     return redirect(url_for(endpoint='volunteers'))
 
@@ -221,13 +221,16 @@ def volunteers():
         volunteers.append((
             design.volunteer_access if access else design.volunteer_noaccess
         )(
+            id=db_id,
             name=volunteer_str,
-            id=id,
             change=change
         ))
     db.close()
     volunteers = ''.join(volunteers)
-    content = design.add_volunteers() + design.volunteers(volunteers=volunteers)
+    content = ''
+    if request.args.get('status') is not None:
+        content += lang.lang['error_add']
+    content += design.add_volunteers() + design.volunteers(volunteers=volunteers)
     response = make_response (render_template(
         'template.html',
         title=lang.lang['volunteers_title'],
@@ -605,7 +608,12 @@ def setLoginCookies(login):
 @ball.get('/login')
 def method_login():
     user_id, auth_html, user_ok= check_auth(request)
+    if user_id is not None:
+        return redirect(url_for('index'))
+    status = request.args.get('status')
     content = design.login_form()
+    if status != None:
+        content += lang.lang['wrong_login']
     return page(
         title=lang.lang['auth'],
         content=content
@@ -616,20 +624,25 @@ def method_login_post():
     password = request.form.get('password')
     db = DB()
     if db.volunteer_get(login) == (None, None):
-        return redirect(url_for('method_login'))
+        return redirect(url_for('method_login', status = "err"))
     _, psw_hash  = db.volunteer_get(login)
     db.close(commit=False)
     if not check_password_hash(psw_hash, password):
-        return redirect(url_for('index'))
+        return redirect(url_for('method_login', status = "err"))
     return setLoginCookies(login)
 
 @ball.get('/register')
 def method_register():
     user_id, auth_html, user_ok= check_auth(request)
+    if user_id is not None:
+        return redirect(url_for('index'))
+    status = request.args.get('status')
     if config.registerManually:
         content = design.register_form()
     else:
-        content = "Ручная регистрация запрещена - обратитесь к администратору для выдчаи логина и пароля"
+        content = lang.lang['disabled_reg_message'] +  "(" + ",".join(config.contacts_list) +")."
+    if status != None:
+        content += lang.lang['wrong_register']
     return page(
         title=lang.lang['auth'],
         content=content
@@ -643,7 +656,7 @@ def method_register_post():
         password = request.form.get('password')
         db = DB()
         if db.volunteer_get(login) != (None, None):
-            return redirect(url_for('index'))
+            return redirect(url_for('method_register', status='err'))
         db.volunteer_create(login, name, generate_password_hash(password))
         db.close(commit=True)
         return setLoginCookies(login)
