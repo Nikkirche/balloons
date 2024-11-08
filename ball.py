@@ -225,9 +225,8 @@ def volunteers():
             name=volunteer_str,
             change=change
         ))
-    db.close()
     volunteers = ''.join(volunteers)
-    content = ''
+    content = design.back_button(name = "К списку мероприятий", url=url_for("index"))
     if request.args.get('status') is not None:
         content += lang.lang['error_add']
     content += design.add_volunteers() + design.volunteers(volunteers=volunteers)
@@ -288,8 +287,9 @@ def problem(problem):
     content = ''
     db = DB()
     problems = [db.problem(problem_id)]
+    event_name = db.event(problems[0]['event_id'])
     db.close()
-    problems_html = design.problem_header(letter=problems[0]['letter'], name=problems[0]['name'])
+    problems_html = design.problem_header(contest_url=f"event{problems[0]['event_id']}", contest= event_name[1],letter=problems[0]['letter'], name=problems[0]['name'])
     content += problems_html
     colors_html = ''
     colors_html += design.problem_color(color=problems[0]['color'])
@@ -303,7 +303,6 @@ def problem(problem):
     content += colors_html
     response = make_response (render_template(
         'template.html',
-        title=problems[0]['letter'],
         auth=auth_html,
         base=config.base_url,
         content=content
@@ -392,6 +391,7 @@ def event(event, hall):
         'name': e[1],
         'state': e[2]}
     event_html = ''
+    event_html += design.back_button(name = "К списку мероприятий", url=url_for("index"))
     event_html += design.standings_link(url=url_for('event_standings', event=event_id))
     event_html += design.stats_link(url=url_for('event_stats', event=event_id))
     content += event_html
@@ -531,6 +531,7 @@ def event_standings(event):
     except KeyError:
         return redirect(url_for('index'))
     event = {
+        'id' : e[0],
         'name': e[1],
         'state': e[2],
     }
@@ -552,7 +553,8 @@ def event_standings(event):
 
     standings_header = ''.join(problems_header)
     teams = []
-    content = '<table>'
+    content = design.back_button(event['name'],url_for('event',event= event['id'], hall ='all'))
+    content += '<table>'
     for t in sorted(db.teams(event_id), key=lambda t: str(config.get_id(t['name']))):
         # normal sitaution - no mapping
         # if t['hall'] is None:
@@ -572,8 +574,8 @@ def event_standings(event):
 
     db.close()
     return page(
-        title=event['name'],
-        content=content
+        content=content,
+        title=''
     )
 
 

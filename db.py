@@ -45,7 +45,7 @@ class DB:
         return events
     def problem(self, problem_id):
         self.__cursor.execute(
-            'select id, letter, color, name from problems' +
+            'select id, letter, color, name, event_id from problems' +
             ' where id=%s',
             [problem_id]
         )
@@ -54,7 +54,8 @@ class DB:
                 'id': row[0],
                 'letter': row[1],
                 'color': row[2],
-                'name': row[3]
+                'name': row[3],
+                'event_id': row[4]
             }
         raise KeyError(problem_id)
 

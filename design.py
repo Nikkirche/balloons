@@ -119,9 +119,13 @@ def action_link_raw(*, token, label):
         '</form>'
     ) % (token, token, token, label)
 
-def problem_header(*, letter, name):
+def back_button(name, url):
+    return f"<a href=\"{url}\">{name}</a>"
+
+def problem_header(*, contest, contest_url, letter, name):
     letter = escape(letter)
-    return '<h2>%s: %s</h2>\n' % (letter, name)
+    return f"""<h1><a href="{contest_url}">{contest}</a><h1>
+    <h2>{letter}: {name}</h2>\n"""
 
 def problem_color(*, color):
     color = escape(color)
@@ -376,7 +380,7 @@ def register_form():
         </form>"""
     return content
 
-def login_form(err = None):
+def login_form():
     content = """
         <form method="POST" action="/login">
             <div class="field">
